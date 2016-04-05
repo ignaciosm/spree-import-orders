@@ -1,0 +1,35 @@
+<% content_for :page_title do %>
+  <%= t(:show_order_import) %>
+<% end %>
+
+<% content_for :page_actions do %>
+    <%= button_link_to t(:back_to_order_imports), admin_order_imports_path, :icon => 'icon-arrow-left' %>
+    <%= button_link_to t(:delete_order_import), admin_order_import_path(@order_import), {:icon => 'icon-remove', :method => :delete, :confirm => t("confirm_delete_order_import")} %>
+<% end %>
+
+<table class="table" id="listing_orders">
+  <thead>
+    <tr data-hook="admin_orders_index_headers">
+      <th><%= t(:order_number) %></th>
+      <th><%= t(:channel) %></th>
+      <th><%= t(:price) %></th>
+      <th><%= t(:state) %></th>
+      <th><%= t(:completed_at) %></th>
+      <th class="actions" data-hook="admin_orders_index_header_actions">Actions</th>
+    </tr>
+ </thead>
+ <tbody>
+ <% @orders.each do |order| %>
+  <tr class="<%= cycle('odd', 'even') %>" <%= "style='color: red;'" if order.state == 'canceled' %> id="<%= dom_id order %>" data-hook="admin_orders_index_rows">
+    <td><%= order.number rescue '' %></td>
+    <td><%= order.channel rescue '' %></td>
+    <td><%= order.display_total rescue '' %></td>
+    <td><span class="label label-<%= order.state.downcase %>"><%= order.state rescue '' %></span></td>
+    <td><%= order.completed_at rescue '' %></td>
+    <td class="actions" data-hook="admin_orders_index_row_actions">
+      <%= link_to_edit_url edit_admin_order_path(order) %>
+    </td>
+  </tr>
+  <% end %>
+  </tbody>
+</table>

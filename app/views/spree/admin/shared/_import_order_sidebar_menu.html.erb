@@ -1,0 +1,5 @@
+<% if can? :admin, Spree::OrderImport %>
+    <ul class="nav nav-sidebar">
+    <%= tab Spree::OrderImport, url: spree.admin_order_imports_url, icon: 'import', label: plural_resource_name(Spree::OrderImport) %>
+  </ul>
+<% end %>

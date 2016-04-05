@@ -4,7 +4,6 @@ Gem::Specification.new do |s|
   s.name        = 'spree_import_orders'
   s.version     = '3.0.1'
   s.summary     = 'spree_import_orders ... imports orders. From a CSV file via Spree Admin interface'
-  s.description = 'TODO: Add (optional) gem description here'
   s.required_ruby_version = '>= 2.0.0'
 
   s.authors   = ["Rohit Agarwal"]

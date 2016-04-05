@@ -2,4 +2,20 @@
 # See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
 
 en:
-  hello: "Hello world"
+  order_import_processing: 'Thanks, your import has been added to the queue for processing. You will receive an email confirming the import once it has completed.'
+  order_imports: 'Import Orders'
+  delete_order_import: "Delete"
+  back_to_order_imports: "Back to Order Imports"
+  delete_order_import_successful: "Import and orders associated deleted successfully"
+  confirm_delete_order_import: "Deleting this import will delete all the order associated, are you sure ?"
+  order_import:
+    state:
+      created: "Created"
+      started: "In Progress"
+      completed: "Completed"
+      failed: "Failed"
+  form:
+    order_import:
+      heading: 'Import Orders from CSV'
+      new:
+        data_file: "Order Data File"
