@@ -66,40 +66,51 @@ module Spree
         rows = CSV.read(self.data_file.path)
         col = get_column_mappings(rows[0])
 
-        rows[1..-1].each do |row|
+        previous_row = nil
+        previous_order_information = nil
+
+        rows[1..-1].each_with_index do |row, index|
           order_information = assign_col_row_mapping(row, col)
           order_information = validate_and_sanitize(order_information)
           next if @numbers_of_orders_before_import.include?(order_information[:order_id])
 
           order_data = get_order_hash(order_information)
-          unless order_information[:order_id].in? order_ids
-            order_data[:bill_address_attributes] = order_data[:ship_address_attributes] = get_address_hash(order_information)
-            order_data = add_custom_order_fields(order_information, order_data)
+          order_data[:bill_address_attributes] = order_data[:ship_address_attributes] = get_address_hash(order_information)
+          order_data = add_custom_order_fields(order_information, order_data)
+          user = Spree::User.find_by_email(order_information[:email]) || Spree::User.new(email: order_information[:email])
 
-            user = Spree::User.find_by_email(order_information[:email]) || Spree::User.new(email: order_information[:email])
-            order = Spree::Core::Importer::Order.import(user, order_data)
-            if order
-              order_ids << order.number 
-              after_order_created(order_information, order)
+          if previous_row == nil
+            previous_row = order_data
+            previous_order_information = order_information
+            next
+          elsif previous_row[:number] == order_data[:number]
+            order_data[:line_items_attributes]
+            attributes = [:line_items_attributes, :payments_attributes, :adjustments_attributes, :shipments_attributes]
+            attributes.each do |attribute|
+              if previous_row[attribute]
+                if order_data[attribute] && (attribute != :shipments_attributes or order_data[:shipments_attributes][:tracking].present?)
+                  previous_row[attribute].concat(order_data[attribute])
+                end
+              else
+                previous_row[attribute] = order_data[attribute]
+              end
             end
           else
-            # code to update more than 1 line items, shipments, payments, adjustments or inventory units
-            order = Spree::Order.find_by_number(order_information[:order_id])
-            Spree::Core::Importer::Order.create_line_items_from_params(order_data.delete(:line_items_attributes), order) if order_information[:sku]
-
-            unless order_information[:tracking].in? order.shipments.map(&:tracking) or order_information[:tracking].nil?
-              # this code creates new shipment if there is a new tracking code
-              Spree::Core::Importer::Order.create_shipments_from_params(order_data.delete(:shipments_attributes), order)
+            order = Spree::Core::Importer::Order.import(user, previous_row)
+            if order
+              order_ids << order.number 
+              after_order_created(previous_order_information, order)
             end
-            Spree::Core::Importer::Order.create_adjustments_from_params(order_data.delete(:adjustments_attributes), order) if order_information[:adjustment_amount] and order_information[:adjustment_label]
-            Spree::Core::Importer::Order.create_payments_from_params(order_data.delete(:payments_attributes), order) if order_information[:payment_method]
-            
-            # Really ensure that the order totals & states are correct
-            order.updater.update
-            order.reload
-            # Ensure if the inventory units are correct
-            Spree::OrderInventory.new(order, order.line_items.last).verify()
-            after_order_updated(order_information, order)
+            previous_row = order_data
+            previous_order_information = order_information
+          end
+          
+          if rows.count == index+2
+            order = Spree::Core::Importer::Order.import(user, previous_row)
+            if order
+              order_ids << order.number
+              after_order_created(previous_order_information, order)
+            end
           end
         end
       end
