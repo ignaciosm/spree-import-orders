@@ -73,6 +73,7 @@ module Spree
           order_information = assign_col_row_mapping(row, col)
           order_information = validate_and_sanitize(order_information)
           next if @numbers_of_orders_before_import.include?(order_information[:order_id])
+          next unless Spree::Variant.find_by_sku(order_information[:sku])
 
           order_data = get_order_hash(order_information)
           order_data[:bill_address_attributes] = order_data[:ship_address_attributes] = get_address_hash(order_information)
@@ -82,7 +83,6 @@ module Spree
           if previous_row == nil
             previous_row = order_data
             previous_order_information = order_information
-            next
           elsif previous_row[:number] == order_data[:number]
             order_data[:line_items_attributes]
             attributes = [:line_items_attributes, :payments_attributes, :adjustments_attributes, :shipments_attributes]
@@ -213,11 +213,6 @@ module Spree
         # this method can be overiden to include custom logic
         # eg. order.shipments.first.update(tracking: order_information[:tracking])
         order.cancel if order_information[:status] == "canceled"
-      end
-
-      def after_order_updated(order_information, order)
-        # this method can be overiden to include custom logic
-        # eg. order.shipments.last.ship
       end
 
   end
