@@ -78,8 +78,12 @@ module Spree
           next unless Spree::Variant.find_by_sku(order_information[:sku])
 
           order_data = get_order_hash(order_information)
-          order_data[:bill_address_attributes] = get_address_hash(order_information, 'bill')
-          order_data[:ship_address_attributes] = get_address_hash(order_information, 'ship')
+          if order_information[:shipping_same_as_billing] == true
+            order_data[:bill_address_attributes] = order_data[:ship_address_attributes] = get_address_hash(order_information)
+          else
+            order_data[:bill_address_attributes] = get_address_hash(order_information, 'bill')
+            order_data[:ship_address_attributes] = get_address_hash(order_information, 'ship')
+          end
           order_data = add_custom_order_fields(order_information, order_data)
           user = Spree::User.find_by_email(order_information[:email]) || Spree::User.new(email: order_information[:email])
 
@@ -102,6 +106,7 @@ module Spree
             order = Spree::Core::Importer::Order.import(user, previous_row)
             if order
               order_ids << order.number
+              order.shipments.last.finalize! # hack to decrease the inventory correctly
               after_order_created(previous_order_information, order)
             end
             previous_row = order_data
@@ -112,6 +117,7 @@ module Spree
             order = Spree::Core::Importer::Order.import(user, previous_row)
             if order
               order_ids << order.number
+              order.shipments.last.finalize! # hack to decrease the inventory correctly
               after_order_created(previous_order_information, order)
             end
           end
@@ -191,17 +197,18 @@ module Spree
         }
       end
 
-      def get_address_hash(order_information, type)
+      def get_address_hash(order_information, type = nil)
+        type += "_" if type
         {
-          firstname: order_information["#{type}_firstname".to_sym],
-          lastname: order_information["#{type}_lastname".to_sym],
-          phone: order_information["#{type}_phone".to_sym],
-          address1: order_information["#{type}_address1".to_sym],
-          address2: order_information["#{type}_address2".to_sym],
-          city: order_information["#{type}_city".to_sym],
-          state: { 'name'=> order_information["#{type}_state".to_sym] },
-          zipcode: order_information["#{type}_zipcode".to_sym],
-          country: { 'name'=> order_information["#{type}_country".to_sym]}
+          firstname: order_information["#{type}firstname".to_sym],
+          lastname: order_information["#{type}lastname".to_sym],
+          phone: order_information["#{type}phone".to_sym],
+          address1: order_information["#{type}address1".to_sym],
+          address2: order_information["#{type}address2".to_sym],
+          city: order_information["#{type}city".to_sym],
+          state: { 'name'=> order_information["#{type}state".to_sym] },
+          zipcode: order_information["#{type}zipcode".to_sym],
+          country: { 'name'=> order_information["#{type}country".to_sym]}
         }
       end
 
