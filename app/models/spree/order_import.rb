@@ -165,6 +165,7 @@ module Spree
         # order_information[:completed_at] = DateTime.strptime(order_information[:completed_at], "%d/%m/%y %H:%M")
         order_information[:completed_at] = order_information[:completed_at] || Time.now
         order_information[:quantity] = order_information[:quantity] || 1
+        order_information[:paid] = order_information[:paid] || (order_information[:price].to_i * order_information[:quantity].to_i)
         order_information
       end
 
@@ -179,7 +180,7 @@ module Spree
             {sku: order_information[:sku], quantity: order_information[:quantity], price: order_information[:price], currency: order_information[:currency]}
           ],
           payments_attributes: [
-            { amount: order_information[:price], payment_method: order_information[:payment_method], state: order_information[:payment_state], created_at: order_information[:payment_created_at]}
+            { amount: order_information[:paid], payment_method: order_information[:payment_method], state: order_information[:payment_state], created_at: order_information[:payment_created_at]}
           ],
           adjustments_attributes: [
             {amount: order_information[:adjustment_amount], label: order_information[:adjustment_label]}
