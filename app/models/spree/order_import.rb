@@ -97,6 +97,8 @@ module Spree
               if previous_row[attribute]
                 if order_data[attribute] && (attribute != :shipments_attributes or order_data[:shipments_attributes].first[:tracking].present?)
                   previous_row[attribute].concat(order_data[attribute])
+                elsif order_data[attribute] && attribute == :shipments_attributes
+                  previous_row[attribute].last[:inventory_units].concat(order_data[attribute].last[:inventory_units])
                 end
               else
                 previous_row[attribute] = order_data[attribute]
