@@ -95,7 +95,7 @@ module Spree
             attributes = [:line_items_attributes, :payments_attributes, :adjustments_attributes, :shipments_attributes]
             attributes.each do |attribute|
               if previous_row[attribute]
-                if order_data[attribute] && (attribute != :shipments_attributes or order_data[:shipments_attributes][:tracking].present?)
+                if order_data[attribute] && (attribute != :shipments_attributes or order_data[:shipments_attributes].first[:tracking].present?)
                   previous_row[attribute].concat(order_data[attribute])
                 end
               else
