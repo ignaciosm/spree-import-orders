@@ -114,7 +114,7 @@ module Spree
             previous_order_information = order_information
           end
 
-          if rows.count == index+2
+          if rows.count == index+heading_row_number+2
             order = Spree::Core::Importer::Order.import(user, previous_row)
             if order
               order_ids << order.number
