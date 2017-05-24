@@ -6,7 +6,7 @@ module Spree
   class OrderImport < ActiveRecord::Base
 
     has_attached_file :data_file, path: ":rails_root/lib/etc/order_data/data-files/:basename.:extension", url: ":rails_root/lib/etc/order_data/data-files/:basename.:extension"
-    validates_attachment :data_file, presence: true, content_type: { content_type: "text/csv" }
+    validates_attachment :data_file, presence: true, content_type: { ['text/plain', 'text/csv', 'application/vnd.ms-excel'] }
     # after_destroy :destroy_orders
     serialize :order_ids, Array
 
