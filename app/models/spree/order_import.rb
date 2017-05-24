@@ -66,12 +66,13 @@ module Spree
         @numbers_of_orders_before_import = @orders_before_import.map(&:number)
 
         rows = CSV.read(self.data_file.path)
-        col = get_column_mappings(rows[0])
+        heading_row_number = get_heading_row_number(rows)
+        col = get_column_mappings(rows[heading_row_number])
 
         previous_row = nil
         previous_order_information = nil
 
-        rows[1..-1].each_with_index do |row, index|
+        rows[(heading_row_number+1)..-1].each_with_index do |row, index|
           order_information = assign_col_row_mapping(row, col)
           order_information = validate_and_sanitize(order_information)
           next if @numbers_of_orders_before_import.include?(order_information[:order_id])
@@ -95,10 +96,8 @@ module Spree
             attributes = [:line_items_attributes, :payments_attributes, :adjustments_attributes, :shipments_attributes]
             attributes.each do |attribute|
               if previous_row[attribute]
-                if order_data[attribute] && (attribute != :shipments_attributes or order_data[:shipments_attributes].first[:tracking].present?)
+                if order_data[attribute] && (attribute != :shipments_attributes or order_data[:shipments_attributes][:tracking].present?)
                   previous_row[attribute].concat(order_data[attribute])
-                elsif order_data[attribute] && attribute == :shipments_attributes
-                  previous_row[attribute].last[:inventory_units].concat(order_data[attribute].last[:inventory_units])
                 end
               else
                 previous_row[attribute] = order_data[attribute]
@@ -115,7 +114,7 @@ module Spree
             previous_order_information = order_information
           end
 
-          if rows.count == index+2
+          if rows.count == index+heading_row_number+2
             order = Spree::Core::Importer::Order.import(user, previous_row)
             if order
               order_ids << order.number
@@ -132,6 +131,13 @@ module Spree
     end
 
     private
+
+      def get_heading_row_number(rows)
+        rows.each_with_index do |row, index|
+          return index if row.present?
+        end
+      end
+
       # get_column_mappings
       # This method attempts to automatically map headings in the CSV files
       # with fields in the product and variant models.
